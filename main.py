@@ -90,14 +90,15 @@ def main():
                             laravel_dict["date_edited"] = message.edit_date.timestamp()
                             laravel_dict["grouped_id"] = message.grouped_id
                             laravel_dict["channel_name"] = channel["username"]
+                            texts = [ laravel_dict["message"] ]
+                            text_features = tfidf.transform(texts)
+                            predictions = loaded_model.predict(text_features)
+                            laravel_dict["event_type_prediction"] = predictions[0]
                         
                         laravel_dict["media"].append(loop.run_until_complete(download_media_from_message(client, message)))
 
 
-                    texts = [ laravel_dict["message"] ]
-                    text_features = tfidf.transform(texts)
-                    predictions = loaded_model.predict(text_features)
-                    laravel_dict["event_type_prediction"] = predictions[0]
+                    
                     print(laravel_dict)
                     # send this to the server to be stored
                     upload_to_laravel(laravel_dict)
