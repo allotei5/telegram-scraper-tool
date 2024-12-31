@@ -4,6 +4,7 @@ import asyncio
 from helpers import ( get_config_attributes, separate_grouped_messages )
 from api import ( get_connection, get_posts, get_entity_attrs, download_media_from_message )
 from remote_server import ( get_telegram_channels, upload_to_laravel )
+import joblib
 
 
 
@@ -32,6 +33,8 @@ api_id = args['api_id']
 api_hash = args['api_hash']
 phone = args['phone']
 
+tfidf = joblib.load('./models/TEXT_SVM_VECTORIZER_MAIN_EVENTS.pkl')
+loaded_model = joblib.load('./models/TEXT_SVM_MAIN_EVENTS.pkl')
 
 def main():
     loop = asyncio.get_event_loop()
@@ -90,10 +93,15 @@ def main():
                         
                         laravel_dict["media"].append(loop.run_until_complete(download_media_from_message(client, message)))
 
+
+                    texts = [ laravel_dict["message"] ]
+                    text_features = tfidf.transform(texts)
+                    predictions = loaded_model.predict(text_features)
+                    laravel_dict["event_type_prediction"] = predictions[0]
                     print(laravel_dict)
                     # send this to the server to be stored
                     upload_to_laravel(laravel_dict)
-                    return None
+                    # return None
                 # loop through grouped messages
                     # download each media
                     # group media and message and send to laravel server to be stored run ml server
@@ -116,6 +124,13 @@ def main():
                     laravel_dict["grouped_id"] = single_message.grouped_id
                     laravel_dict["channel_name"] = channel["username"]
                     laravel_dict["media"].append(loop.run_until_complete(download_media_from_message(client, single_message)))
+                    
+                    texts = [ laravel_dict["message"] ]
+                    text_features = tfidf.transform(texts)
+                    predictions = loaded_model.predict(text_features)
+                    laravel_dict["event_type_prediction"] = predictions[0]
+                    print(laravel_dict)
+                    upload_to_laravel(laravel_dict)
 
                 
 

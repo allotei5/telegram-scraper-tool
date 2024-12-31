@@ -57,10 +57,19 @@ async def get_entity_attrs(client, source):
     return value
 
 async def download_media_from_message(client, message):
-    
+    allowed_size = 50 * 1024 * 1024
     if message.media:
         print('here')
         filename = f"{message.id}_"
         # file_extension = get_file_extension
+       
+        if message.document:
+            size = message.document.size
+            if size < allowed_size:
+                file_path = await client.download_media(message, file=f"downloads/{filename}")
+                return file_path
+            else:
+                return None
+            
         file_path = await client.download_media(message, file=f"downloads/{filename}")
         return file_path

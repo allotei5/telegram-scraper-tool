@@ -1,6 +1,10 @@
 import requests
 import os
-url = "http://localhost:8000/api/"
+
+from helpers import ( get_config_attributes )
+
+args = get_config_attributes()
+url = args["laravel_api"]
 
 def get_telegram_channels():
     '''
@@ -30,7 +34,11 @@ def upload_to_laravel(payload):
     Uploads to my laravel server
     '''
     func_url = f"{url}save-social-media-post"
-    files = [('media_files[]', (os.path.basename(file), open(file, 'rb'))) for file in payload['media']]
+    files = [ 
+        ('media_files[]', (os.path.basename(file), open(file, 'rb'))) 
+        for file in payload['media'] 
+        if file is not None
+    ]
     print(files)
 
     response = requests.post(func_url, data=payload, files=files)
